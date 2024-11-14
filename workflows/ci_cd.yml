@@ -1,0 +1,77 @@
+name: CI/CD for R-Type Game
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install essential tools and dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake zip unzip autoconf automake libtool pkg-config \
+                              ninja-build curl gcc g++ make libssl-dev \
+                              libx11-dev libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev \
+                              xvfb x11-xserver-utils
+
+      - name: Install vcpkg
+        run: |
+          cd /home/runner
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+        env:
+          VCPKG_ROOT: /home/runner/vcpkg
+
+      - name: Install dependencies using vcpkg
+        run: |
+          cd /home/runner/vcpkg
+          ./vcpkg install boost-system boost-filesystem boost-date-time boost-serialization sfml asio
+          ./vcpkg integrate install
+
+      - name: Build Project
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Launch Server
+        run: |
+          ./build/bin/r-type_server &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+          sleep 5
+
+      - name: Launch Client with Virtual Display
+        run: |
+          export DISPLAY=:99
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+          sleep 3
+          ./build/bin/r-type_client &
+          echo "CLIENT_PID=$!" >> $GITHUB_ENV
+          sleep 5
+
+      - name: Verify Server and Client are Running
+        run: |
+          if [ -n "$SERVER_PID" ] && [ -n "$CLIENT_PID" ] && ps -p "$SERVER_PID" > /dev/null && ps -p "$CLIENT_PID" > /dev/null; then
+            echo "Both server and client are running successfully."
+          else
+            echo "Server or client failed to start."
+            exit 1
+          fi
+
+      - name: Terminate Server and Client
+        if: success()
+        run: |
+          kill $SERVER_PID
+          kill $CLIENT_PID

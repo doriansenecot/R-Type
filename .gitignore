@@ -1,0 +1,62 @@
+# Fichiers de compilation et de lien
+##################################
+
+*.o
+*.obj
+*.exe
+*.elf
+*.dll
+*.so
+*.dylib
+*_i.c
+*_p.c
+
+# Fichiers de débogage
+########################
+
+*_d.c
+*.idb
+*.pdb
+*.sdb
+*.sym
+*.vbg
+
+# Autres fichiers et répertoires générés par des outils de build
+###################################################################
+
+*.ilk
+*.log
+*.lib
+*.map
+*.dsw
+*.ds_store
+.settings/
+vcpkg
+
+# Visual Studio Code
+####################
+
+.vscode/
+.vs/
+
+# IntelliJ IDEA
+#################
+
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# macOS
+########
+
+.DS_Store
+coding-style.sh
+coding-style-reports.log
+
+# Projet
+#########
+cmd.txt
+*.env
+build/
+CMakeUserPresets.json
